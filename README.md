@@ -399,7 +399,7 @@ In the Templates folder, I provide an outline on how to run a job array with the
 
 # SLURM Command Cheatsheet
 
-- `squeue -A <ACCOUNT>` - Checks jobs related to a PACE account
+- `squeue -u <GT_USERNAME` - Checks jobs related to a GT username
 - `scancel <JOB_ID>` - Cancels a job on PACE
 - `module load anaconda3` - Loads Anaconda (so you can create your own conda environments)
 
