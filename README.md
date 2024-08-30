@@ -408,6 +408,5 @@ In the Templates folder, I provide an outline on how to run a job array with the
 - `pace-quota` - Gives information on PACE Storage and money in accounts
 
 # Contact for Questions
-
-If I am still a TA for ML, you can find me on EdStem.
-My GT email address is <gurudesh@gatech.edu>
+If you are having trouble with PACE, you can email the PACE Support team at <pace-support@oit.gatech.edu>
+If I am still a TA for ML, you can find me on EdStem. My GT email address is <gurudesh@gatech.edu>
