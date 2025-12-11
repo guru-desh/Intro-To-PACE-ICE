@@ -25,7 +25,7 @@ There's two main reasons why this happens:
 To fix this, you can run the following command to install `ipykernel` in your Python environment:
 
 ```bash
-pip install ipykernel # or conda install ipykernel
+pip install ipykernel # or conda install ipykernel or uv add ipykernel
 ```
 
 To add your Python environment to the Jupyter kernel list, you can run the following command:
