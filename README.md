@@ -4,13 +4,22 @@
   <h3>We are looking for contributors!</h3>
 </div>
 
-This unofficial document is meant to be a guide for students to get started with PACE ICE. If you are experienced with PACE ICE and would like to contribute to this document, please make a PR!
+This documentation is meant to be a guide for students to get started with PACE ICE. If you are experienced with PACE ICE and would like to contribute to this document, please make a PR! If you would like to see something added to this document, please open an issue!
 
-[PACE](https://pace.gatech.edu/) stands for Partnership for an Advanced Computer Environment. PACE is one of the HPC Clusters available for Georgia Tech Researchers and students to use for intensive computational tasks, and ICE is the computing cluster used in classrooms. If you are familiar with [the guide for PACE Phoenix](https://github.com/guru-desh/Intro-To-PACE-Phoenix), which is Georgia Tech's research cluster, this guide is very similar.
+We would appreciate any contributions in the following areas:
+
+- Apptainer and its usage on PACE ICE (please review what we have so far in the [Advanced/custom_environments.md](Advanced/custom_environments.md) file)
+- Additional Troubleshooting tips and tricks (please review what we have so far in the [Advanced/troubleshooting.md](Advanced/troubleshooting.md) file)
+- Advanced resource scheduling (ex: how to schedule GPUs based on VRAM requirements, etc.)
+
+## About PACE
+
+[PACE](https://pace.gatech.edu/) stands for Partnership for an Advanced Computer Environment. PACE is one of the HPC Clusters available for Georgia Tech Researchers and students to use for intensive computational tasks, and ICE is the computing cluster used in classrooms. If you are familiar with [the guide for PACE Phoenix](https://github.com/guru-desh/Intro-To-PACE-Phoenix), which is Georgia Tech's main cluster for research labs, this guide is very similar.
 
 ## Table of Contents
 
 - [Intro To PACE ICE](#intro-to-pace-ice)
+  - [About PACE](#about-pace)
   - [Table of Contents](#table-of-contents)
   - [Getting Started with PACE ICE](#getting-started-with-pace-ice)
   - [Accessing PACE ICE](#accessing-pace-ice)
@@ -21,14 +30,17 @@ This unofficial document is meant to be a guide for students to get started with
   - [Storage on PACE](#storage-on-pace)
     - [Personal](#personal)
     - [Scratch](#scratch)
+    - [Temporary Storage (during PACE Jobs)](#temporary-storage-during-pace-jobs)
     - [Transferring Files to and from PACE](#transferring-files-to-and-from-pace)
   - [Setting up Environments on PACE](#setting-up-environments-on-pace)
     - [Conda Environments](#conda-environments)
+    - [Python Environments with `uv`](#python-environments-with-uv)
     - [Even more custom environments](#even-more-custom-environments)
   - [Running Jobs on PACE](#running-jobs-on-pace)
     - [Interactive Jobs](#interactive-jobs)
-      - [Using Open OnDemand (Recommended)](#using-open-ondemand-recommended)
-      - [Using `salloc` (Not Recommended)](#using-salloc-not-recommended)
+      - [Using Open OnDemand (Beginner Friendly)](#using-open-ondemand-beginner-friendly)
+      - [Using `salloc`](#using-salloc)
+      - [VS Code Tunnels](#vs-code-tunnels)
     - [Non-Interactive Jobs](#non-interactive-jobs)
       - [Single Node CPU Jobs](#single-node-cpu-jobs)
         - [Where do I activate my `conda` environment?](#where-do-i-activate-my-conda-environment)
@@ -40,6 +52,7 @@ This unofficial document is meant to be a guide for students to get started with
         - [Using Job Arrays](#using-job-arrays)
   - [SLURM Command Cheatsheet](#slurm-command-cheatsheet)
   - [PACE Command Cheatsheet](#pace-command-cheatsheet)
+  - [Troubleshooting](#troubleshooting)
   - [Contact for Questions](#contact-for-questions)
 
 ## Getting Started with PACE ICE
@@ -69,12 +82,26 @@ ln -s $(pwd)/scratch/.conda ~/.conda
 
 What this does is that everytime you create a new environment or install a package, your packages are now installed inside `scratch`, which has 300GB, and the `.conda` folder inside `~` points to `./scratch/.conda`.
 
+If you already have a `.conda` folder in your home directory, and its not a symlink, you can use this command to move it to `scratch`.
+
+```bash
+mv ~/.conda ./scratch/.conda
+ln -s $(pwd)/scratch/.conda ~/.conda
+```
+
 ### Set `.cache` symlink
 
 Changing the `.cache` symlink is necessary to make sure that you can use libraries that save models into this folder like PyTorch and huggingface. Models can take up multiple GBs of space, which means that it's not practical using them on your personal storage on PACE since that is restricted to only 15GB. This can be fixed using the following command from `~`.
 
 ```bash
 mkdir ./scratch/.cache
+ln -s $(pwd)/scratch/.cache ~/.cache
+```
+
+If you already have a `.cache` folder in your home directory, and its not a symlink, you can use this command to move it to `scratch`.
+
+```bash
+mv ~/.cache ./scratch/.cache
 ln -s $(pwd)/scratch/.cache ~/.cache
 ```
 
@@ -106,9 +133,17 @@ The personal storage is storage that you as the user can claim to your name. It'
 
 The scratch storage is probably the more interesting of all the storage options. It can hold **300 GB** of data. However there's two catches with this. First, scratch storage is limited to you as the user. This means that if you have multiple collaboraters, then each collaborater would have to store the same data in their scratch storage. Second, data in the scratch storage is wiped after the semester ends. **It is important that you have all your important data in the scratch directory backed up externally**.
 
+### Temporary Storage (during PACE Jobs)
+
+Sometimes, you may need to store data that exceeds the scratch storage limit. In this case, you can use the temporary storage during PACE Jobs. This temporary directory is exposed as an environment variable called `$TMPDIR`.
+
+These temporary directories are only available during the job allocation. Usually, these temporary directories contain 1TB+ of space.
+
+Thanks to @macaaroni19 from [Reddit](https://www.reddit.com/r/gatech/comments/1no888h/bamboozled_by_pace_reached_storage_quota/) for this information.
+
 ### Transferring Files to and from PACE
 
-PACE recommends that you use Globus to transfer files to and from PACE. I have tried this before, but it is very buggy. I personally recommend using `scp` or `rsync` as ways to transfer files to and from PACE.
+PACE recommends that you use Globus to transfer files to and from PACE. Globus can very buggy. We recommend using [`scp`](https://linuxize.com/post/how-to-use-scp-command-to-securely-transfer-files/) or `rsync` as ways to transfer files to and from PACE.
 
 In general, the structure for using `rsync` is as such:
 
@@ -124,7 +159,7 @@ rsync -a --progress home.txt gdeshpande9@login-ice.pace.gatech.edu:/home/hice1/g
 
 This transfers the `hello.txt` from my computer to PACE.
 
-Using `scp` is very similar as well. I won't cover `scp` since `rsync` was already covered. If interested, you can find more information on `scp` [here](https://linuxize.com/post/how-to-use-scp-command-to-securely-transfer-files/).
+**If you are uncomfortable with using `rsync` or `scp`,** we recommend using an [SFTP client](https://www.sftp.net/clients) to transfer files to and from PACE that uses a Graphical User Interface (GUI).
 
 ## Setting up Environments on PACE
 
@@ -132,25 +167,17 @@ Using `scp` is very similar as well. I won't cover `scp` since `rsync` was alrea
 
 You cannot use `conda` directly once you log into PACE. You need to *load in the `conda` module*. This is the process for any other modules that PACE offers. You can reference [the PACE documentation](https://docs.pace.gatech.edu/slurm-software/software_list/) to see all the offered software.
 
-**To load in `conda`, run the command `module load anaconda3`**. You should see that the `base` environment is now active. **You must create your environment**. You cannot use the `base` environment since it not writable. From here, all the regular `conda` commands to create, activate, and install packages into environments will work as standard. To avoid unexpected issues, please make sure to follow [the intro steps](#things-to-do-on-your-first-time-on-pace).
+**To load in `conda`, run the command `module load anaconda3`**. You should see that the `base` environment is now active. **You must create your environment**. You cannot use the `base` environment since it not writable. From here, all the regular `conda` commands to create, activate, and install packages into environments will work as standard. To avoid unexpected issues, please make sure to follow [the intro steps](#things-to-do-on-your-first-time-on-pace-ice).
+
+### Python Environments with [`uv`](https://docs.astral.sh/uv/)
+
+If you want to create a Python virtual environment, one of the easiest ways to do so is with [`uv`](https://docs.astral.sh/uv/). PACE ICE supports `uv` out of the box.
+
+**To use `uv`, run the command `module load uv`**. You should see that the `uv` environment is now active. From here, all the regular `uv` commands to create, activate, and install packages into environments will work as standard. To avoid unexpected issues, please make sure to follow [the intro steps](#things-to-do-on-your-first-time-on-pace-ice).
 
 ### Even more custom environments
 
-PACE doesn't have every module in the world available to use. This means that we have to provide a container that contains this informatation and give it to PACE so we can run experiments with our environment but leverage the Phoenix Cluster. This process is straightforward, but requires back-and-forth with PACE Support and **is a multi-month process**.
-
-If you really need to create a new environment, here's the steps that you would need to follow:
-
-1. Create a Docker image with your requirements
-2. Publish this Docker to Docker Hub
-3. Send an email to PACE OIT Support requesting for a new container. The email should contain the following
-   1. Your Name
-   2. PI's Name
-   3. Link to Docker image on Docker Hub
-   4. Link/upload of your Dockerfile used to create the image
-   5. Legitimate reasons why you need this container and why PACE cannot natively reproduce this environment with their modules. **If this reason cannot be provided, your request will be rejected.**
-   6. Ask for the container to be placed in the project storage.
-
-PACE will create an apptainer container. Apptainer is very similar to Docker, but it retains user permissions. Apptainer can also be interchanged with singularity (that was the original name).
+Please refer to the [Custom Environments](Advanced/custom_environments.md) guide for more information on how to create even more custom environments on PACE ICE.
 
 ## Running Jobs on PACE
 
@@ -160,7 +187,7 @@ This is the most important section of this entire document. We'll talk about how
 
 Interactive Jobs are one of the most easiest jobs to get started with in PACE.
 
-#### Using Open OnDemand (Recommended)
+#### Using Open OnDemand (Beginner Friendly)
 
 PACE has really put initiative into adding Open OnDemand to their platform, which creates a nice UI that handles everything neatly. Interactive Jobs can do all types of jobs well except for Job Arrays and sometimes environment setup with Apptainer (except for the terminal/command line option), which a non-interactive job handles better. You can go [here](https://docs.pace.gatech.edu/ood/guide/) to access Open OnDemand for the ICE Cluster. Note that you will have to sign into SSO and be on the GT VPN to access it.
 
@@ -168,7 +195,7 @@ Here is what the home page looks like:
 
 ![Open OnDemand Home](./Images/OpenOnDemandHome.png)
 
-You have four tabs at the top. To create an interactive job, click on the *Interactive Apps* tab. The dropdown options are *Jupyter*, *Matlab*, *RStudio*, *Interactive Shell*. For this demonstration, let's assume that I will create a Jupyter Server on PACE.
+You have four tabs at the top. To create an interactive job, click on the *Interactive Apps* tab. For this demonstration, let's assume that I will create a Jupyter Server on PACE.
 
 Here are the options that I have when creating a Jupyter Server
 
@@ -180,7 +207,7 @@ You can change the account. It uses the default free-tier option.
 
 There is usually only one type of quality of service for students which is either `coc-ice` or `pace-ice` depending on the class. If you are a TA, then you can use `coc-grade` or `pace-grade`, which gives you priority in the queue.
 
-In Node Type, you can specify if you want a GPU node. There's 3 different types of GPUs you can get including a V100, RTX 6000, and an A100.
+In Node Type, you can specify if you want a GPU node. There's multiple different types of GPUs you can get including a V100s, A100s, H100s, RTX 6000s, and more.
 
 You can specify the number of nodes you want. I always select 1 for interactive jobs, since it's difficult to manage multiple nodes in an interactive job.
 
@@ -204,7 +231,7 @@ You can now access your Jupyter Server. It will give you the exact same experien
 
 I personally don't use Open OnDemand as much. The reason is because I use VS Code remote access feature, which already gives me exactly what I'm looking for. I also mainly schedule non-interactive jobs. I believe that Open OnDemand is useful, and I have used it before as well. It's a great introduction into PACE for beginners. It's ease of use is why PACE promotes it so much to draw researchers to use PACE in its easiest form possible.
 
-#### Using `salloc` (Not Recommended)
+#### Using `salloc`
 
 Another way to start an interactive job is to use the `salloc` command. The `salloc` command allows you to stay within your current terminal in PACE and enter the machines requested for the job. The advantage of this is that you don't need to leave your terminal. The disadvantage is that this is less powerful compared to the options offered in PACE's Open OnDemand instance and it also requires decent SLURM knowledge.
 
@@ -226,6 +253,14 @@ As an example, let's use an existing `sbatch` configuration and convert it so th
 ```bash
 salloc --nodes=1 --ntasks-per-node=24 --time=2:00:00 --qos=coc-ice
 ```
+
+#### VS Code Tunnels
+
+If you are using Open OnDemand, you may have been slightly annoyed that your syntax highlighting and key-bindings are not the same as VS Code.
+
+If you are using VS Code, you can use the VS Code Tunnels feature to connect your VS Code instance to your PACE `salloc` instance. This way, you can use your VS Code instance to edit your code and run your commands.
+
+[This guide](https://docs.coreweave.com/docs/products/sunk/access_sunk/vs-code-with-slurm) provides a detailed guide on how to use VS Code Tunnels with SLURM.
 
 ### Non-Interactive Jobs
 
@@ -278,7 +313,6 @@ If you have a `conda` environment and a Python file, then you can use this templ
 #SBATCH --job-name=Task
 #SBATCH --nodes=1 --ntasks-per-node=24
 #SBATCH --time=2:00:00
-#SBATCH --qos=coc-ice
 #SBATCH --output=./logs/task.out
 #SBATCH --mail-type=NONE
 
@@ -301,7 +335,6 @@ Running Single Node GPU Jobs is a simple change in the `.sbatch` file. Let's see
 #SBATCH --job-name=Task
 #SBATCH --nodes=1 --ntasks-per-node=12 --gres=gpu:V100:1
 #SBATCH --time=2:00:00
-#SBATCH --qos=coc-ice
 #SBATCH --output=./logs/task.out
 #SBATCH --mail-type=NONE
 
@@ -330,7 +363,6 @@ Running Multi Node GPU Jobs is a simple change in the `.sbatch` file. Let's see 
 #SBATCH --job-name=Task
 #SBATCH --nodes=3 --ntasks-per-node=24 --gres=gpu:V100:2
 #SBATCH --time=2:00:00
-#SBATCH --qos=coc-ice
 #SBATCH --output=./logs/task.out
 #SBATCH --mail-type=NONE
 
@@ -410,7 +442,6 @@ Let's see how the `.sbatch` file has changed:
 #SBATCH --job-name=Job-Array-Template
 #SBATCH --nodes=1 --ntasks-per-node=24
 #SBATCH --time=4:00:00
-#SBATCH --qos=coc-ice
 #SBATCH --output=logs/Task%a.out
 #SBATCH --mail-type=NONE
 #SBATCH --array=1-100
@@ -447,6 +478,10 @@ In the Templates folder, I provide an outline on how to run a job array with the
 ## PACE Command Cheatsheet
 
 - `pace-quota` - Gives information on PACE Storage and money in accounts
+
+## Troubleshooting
+
+Please refer to the [Troubleshooting](Advanced/troubleshooting.md) guide for more information on how to troubleshoot common issues with PACE.
 
 ## Contact for Questions
 

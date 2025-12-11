@@ -3,7 +3,6 @@
 #SBATCH --job-name=Task
 #SBATCH --nodes=1 --ntasks-per-node=12 --gres=gpu:V100:1
 #SBATCH --time=2:00:00
-#SBATCH --qos=coc-ice
 #SBATCH --output=./logs/task.out
 #SBATCH --mail-type=NONE
 
